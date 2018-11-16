@@ -1,0 +1,92 @@
+.App {
+  display:fixed;
+  top:0;
+  left:0;
+  right: 0;
+  bottom: 0;
+  background-color: #282c34;
+  font-size: calc(10px + 1vmin);
+  color: white;
+  min-height: 100vh;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite .333s linear;
+  height: 5vmin;
+}
+
+h4 {
+  font-family: monospace;
+  font-weight: 10;
+  margin-top: -2vmin;
+  padding-left: 40vmin;
+  font-size: calc(10px + 1vmin);
+}
+
+h5 {
+  margin-top: 2vmin;
+  font-weight: 10;
+  font-family: monospace;
+  font-size: calc(10px + 0.3vmin);
+  padding-left: 5vmin;
+}
+
+.h-box {
+  margin-bottom: 2vmin;
+}
+.App-ui span {
+  padding-left: 2vmin;
+}
+.App-ui {
+  margin-left: 3vmin;
+  padding-top: 3vmin;
+  border-top: solid 1px white;
+}
+
+input[type="text"]:focus {
+  border: none;
+  background-color: #484c54;
+}
+
+textarea {
+  min-height: 20vmin;
+  resize: none;
+}
+
+input[type="text"][disabled], textarea[disabled] {
+  cursor: pointer;
+  background-color: #181c24;
+
+}
+
+input[type="text"], textarea {
+  width: 40vmin;
+  padding: 1vmin;
+  font-family: monospace;
+  background-color: #383c44;
+  color: lightgreen;
+  border: none;
+}
+
+.App-header span {
+    margin-left: 3vmin;
+}
+.App-header {
+  padding-top: 3vmin;
+  display: flex;
+  align-items: flex-start;
+  font-size: calc(10px + 2vmin);
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
