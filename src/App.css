@@ -18,7 +18,7 @@
 h4 {
   font-family: monospace;
   font-weight: 10;
-  margin-top: -2vmin;
+  margin-top: -0.7vmin;
   padding-left: 40vmin;
   font-size: calc(10px + 1vmin);
 }
@@ -49,14 +49,8 @@ input[type="text"]:focus {
 }
 
 textarea {
-  min-height: 20vmin;
+  height: 20vmin;
   resize: none;
-}
-
-input[type="text"][disabled], textarea[disabled] {
-  cursor: pointer;
-  background-color: #181c24;
-
 }
 
 input[type="text"], textarea {
@@ -66,6 +60,12 @@ input[type="text"], textarea {
   background-color: #383c44;
   color: lightgreen;
   border: none;
+}
+
+.copyable {
+  user-select: none;
+  cursor: pointer;
+  background-color: #181c24;
 }
 
 .App-header span {
@@ -80,6 +80,14 @@ input[type="text"], textarea {
 
 .App-link {
   color: #61dafb;
+}
+
+.key-field {
+  height: 40px;
+}
+
+.copy-area {
+  visibility: hidden;
 }
 
 @keyframes App-logo-spin {

@@ -1,35 +1,222 @@
-import React, { Component } from 'react';
-import logo from './logo-te-logo.png';
+import React, { Component } from 'react'
+import createECDH from 'create-ecdh'
+import BitChaos from './lib/bit-chaos'
+import b64 from 'base64-arraybuffer'
+
+import logo from './logo-te-logo.png'
 import './App.css';
 
+/* eslint-disable */
+
+// АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ
+
 class App extends Component {
+
+  constructor() {
+    super()
+
+    this.ecdh = createECDH('secp521r1')
+
+    this.bc = new BitChaos('')
+
+    this.state = {
+      key: this.ecdh.generateKeys(),
+      secret: '',
+      peerMessage: '',
+      message: ''
+    }
+
+  }
+
+  onPeerPublicChange({value = null}) {
+    if(!value) return;
+    try {
+      let secret = this.ecdh.computeSecret(new Uint8Array(b64.decode(value)))
+      this.setState({ secret })
+      this.bc = new BitChaos(secret)
+    } catch (e) { console.warn('wrong peer public:', value, b64.decode(value), e) }
+  }
+
+  onPeerMessageChange({value = null}) {
+    if(!value) return;
+    try {
+      this.setState({
+        peerMessage: this.bc.decrypt(new Uint8Array(b64.decode(value)))
+      })
+    } catch (e) { console.warn('wrong peer message:', value, e) }
+  }
+
+  onMessageChange({value = null}) {
+    if(!value) return;
+    try {
+      this.setState({
+        message: b64.encode(this.bc.encrypt(value))
+      })
+    } catch (e) { console.warn('wrong message:', value, e) }
+  }
+
+  copy({value = null}) {
+    if(!value) return;
+    console.log({navigator})
+    // navigator.clipboard.writeText(value).then(console.log, console.error);
+
+
+
+    // console.log({value})
+    // this.copyArea.value = value
+    // console.log('this.copyArea.value', this.copyArea.value)
+    // this.copyArea.focus()
+    // this.copyArea.select()
+    // document.execCommand('copy');
+  }
+
   render() {
+
+    console.log('key:', this.state.key)
+
+    const { key, secret, peerMessage, message } = this.state
+
+    const publicKey = b64.encode(key)
+
     return (
       <div className="App">
+
         <header className="App-header">
           <span>MEM Project</span>
           <span><img src={logo} className="App-logo" alt="logo" /></span>
           <span>relative-chaos</span>
         </header>
         <h4>end-to-end content encryptyon lab</ h4>
+
         <div className="App-ui">
+
           <div className="h-box">
-            <span><input type="text" placeholder="Открытый ключ собеседника"/></span>
-            <span><input type="text" disabled title="Скопировать в буфер" placeholder="Ваш открытый ключ: 2d0fdef52ddbf10ffc6420d14e7a3514a32ded1203cfb8eb5c8bf55c72490b7c74644ee63e8b2855cf7b7af5f23f7a8f6318f5b65ceca6e4c77cecd07d2566ca9f365cb8657d9cb69c9efacb90b7147f7c17363c3410438ea4d096dbcc1322569448d5dfd04b9b551521d426dbd7481c34a11f8e2435a0198d67895a9f5f861336723741700c6673a90bfa92f8a5e0fa279b14bd307b747cd372a5c803ae62ad5019e14b175d01f29dd34dd56e814ae8afd80a757ec10209ba37613b81b072e981ee8631f324570ba3b7f9842e12f59afd90027474e78fae5df1047a7b9b55b7306791420ee6fc2ffab35d8ee34105b49bae5d819196bfab80c741f95338cfa737ca1a338e74c82afb7c79242300d0b98540a62d6ae039cc91b64d984083b4c6463eb238d3d7a8d05f558a479c811c3fafa0e022d0e159025e8e77c4e58bfb13b6e4e46f9126b735396e9ea553fb510243f6a7b58fbed7d6d8791c0a67cdac350f21902f2e09c2b8c5cc27c74edb05879d57f96070deb37d2f5294ed35ccb3b1b5a571c946c706e2ea7bda1337451b915a8f77b1af0cb215920e9d95ec686a6864f89ffc4d4b09b2ff8ccc2d0735d18a91814ae86ac0bad377ec7de279402185aa70caa0bc006d96c5716ddadd80f17d1863e387a1cb9e260c5ff0ce1825633a4fc"/></span>
+            <span><textarea className='key-field' placeholder="Открытый ключ собеседника" onChange={({target = null}) => target && this.onPeerPublicChange(target)}/></span>
+            <span><textarea className='key-field copyable' title="Скопировать в буфер" onChange={e=>e} value={publicKey}/></span>
           </div>
+
           <div className="h-box">
-            <span><textarea placeholder="Шифрованный текст собеседника"/></span>
-            <span><textarea placeholder="Ваше сообщение собеседнику"/></span>
+            <span><textarea placeholder="Шифрованный текст собеседника" onChange={({target = null}) => target && this.onPeerMessageChange(target)}/></span>
+            <span><textarea placeholder="Ваше сообщение собеседнику" onChange={({target = null}) => target && this.onMessageChange(target)}/></span>
           </div>
+
           <div className="h-box">
-            <span><textarea disabled  title="Скопировать в буфер" placeholder="Расшифрованный текст собеседника"/></span>
-            <span><textarea disabled  title="Скопировать в буфер" placeholder="Шифрованное сообщение собеседнику"/></span>
+            <span><textarea disabled onClick={({target = null}) => target && this.copy(target)} title="Скопировать в буфер" placeholder="Расшифрованный текст собеседника" value={peerMessage}/></span>
+            <span><textarea disabled onClick={({target = null}) => target && this.copy(target)} title="Скопировать в буфер" placeholder="Шифрованное сообщение собеседнику" value={message}/></span>
           </div>
+
         </div>
+
         <h5>2018 © MEM COST Technologies</h5>
       </div>
     );
   }
 }
+        // <textarea className='copy-area' ref={ref => this.copyArea = ref} onChange={e => e} value=''/>
 
 export default App;
+
+
+/*
+
+рассмотрим две логические операции: ИЛИ ( | ) и И ( & ) для классических битовых переменных ( двух однобитовых регистра процессора ) X и Y с записью результата в регистр R
+операция ИЛИ ( X | Y = "R" )
+0 | 0 = 0
+0 | 1 = 1
+1 | 0 = 1
+1 | 1 = 1
+операция И ( X & Y = "R" )
+0 & 0 = 0
+0 & 1 = 0
+1 & 0 = 0
+1 & 1 = 1
+Регистр R может быть представлен как результат операции над регистрами X и Y и так как мы можем совершать над регистрами разные операции, мы можем добавить в систему регистр OP, кодирующий саму операцию
+Виртуализация регистра R позволяет кодировать его значения набором значения трёх регистров, что делает значение этого регистра абстрактным и зависимым от интерпретации значений регистров X, OP, Y
+Так, мы можем установить, что регистр Y кодирует не второй операнд операции, а её результат. По сути мы просто меняем ролями регистры Y и R и теперь виртуализован у нас второй операнд, а результат задан условием
+при таком способе задания значения виртуального регистра, он может принимать следующие состояния
+
+операция ИЛИ ( X | "Y" = R )
+однозначно 0
+0 | "0" = 0 => 000 = 0
+однозначно 1
+0 | "1" = 1 => 001 = 1
+суперпозиция состояний (и то и другое одновременно)
+1 | "0" = 1 => 101 = ?
+1 | "1" = 1 => 101 = ?
+невозможное состояние (ни то ни другое)
+1 | "!" = 0 => 100 = !
+
+операция И ( X & "Y" = R )
+суперпозиция состояний (и то и другое одновременно)
+0 & "0" = 0 => 010 = ?
+0 & "1" = 0 => 010 = ?
+невозможное состояние (ни то ни другое)
+0 & "!" = 1 => 011 = !
+однозначно 0
+1 & "0" = 0 => 110 = 0
+однозначно 1
+1 & "1" = 1 => 111 = 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
