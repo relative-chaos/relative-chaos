@@ -10,6 +10,8 @@
 
 # production
 /build
+/dist
+/relative-chaos.github.io
 
 # misc
 .DS_Store

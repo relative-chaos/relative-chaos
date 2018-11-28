@@ -92,7 +92,7 @@ class App extends Component {
 
           <div className="h-box">
             <span><textarea className='key-field' placeholder="Открытый ключ собеседника" onChange={({target = null}) => target && this.onPeerPublicChange(target)}/></span>
-            <span><textarea className='key-field copyable' title="Скопировать в буфер" onChange={e=>e} value={publicKey}/></span>
+            <span><textarea className='key-field' title="Скопировать в буфер" onChange={e=>e} defaultValue={publicKey}/></span>
           </div>
 
           <div className="h-box">
