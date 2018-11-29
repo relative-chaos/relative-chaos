@@ -31,6 +31,56 @@ h5 {
   padding-left: 5vmin;
 }
 
+.flex {
+  display: flex;
+  color: lightgreen;
+  text-shadow: 0 5px 4px rgba(0,0,0,0.7);
+  justify-content: space-around;
+}
+
+.footer {
+  font-size: calc(10px + 0.4vmin);
+  margin-left: 2vmin;
+  padding:2vmin;
+  border-top: solid 2px green;
+}
+
+.top-1 { margin-top: 1vmin; }
+.top-2 { margin-top: 2vmin; }
+.top-4 { margin-top: 4vmin; }
+
+.left-1 { margin-left: 1vmin; }
+.left-2 { margin-left: 2vmin; }
+.left-4 { margin-left: 16vmin;}
+
+.wallet { color: lightgray; }
+
+.width-60 {
+  word-break: break-all;
+  width: 30vmin;
+}
+
+.key {
+  width: 30vmin;
+  word-break: break-all;
+  margin-right: 4vmin;
+}
+
+.comment {
+  color: darkgray;
+}
+
+.mail-link {
+  color:lightgreen;
+}
+
+.code {
+  width: 140px;
+  margin-top: 1vmin;
+  padding: 2vmin;
+  background-color: white;
+}
+
 .h-box {
   margin-bottom: 2vmin;
 }

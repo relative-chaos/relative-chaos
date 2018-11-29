@@ -1,19 +1,50 @@
 import React, { Component } from 'react'
 import createECDH from 'create-ecdh'
+import B64 from 'base64-arraybuffer'
+// import QR from 'qrcode.react'
+
 import BitChaos from './lib/bit-chaos'
-import b64 from 'base64-arraybuffer'
+import rapi from './lib/rapi-lapi'
 
 import logo from './logo-te-logo.png'
 import './App.css';
 
 /* eslint-disable */
 
-// АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ
+const isClient = typeof window !== 'undefined'
+
+const PATH = typeof location !== 'undefined' ? location.pathname.slice(1) : ''
+
+const LS = isClient ? (id, value = null) => {
+  console.log('LS', {id, value})
+  if(!value) {
+    if(typeof localStorage[id] === 'undefined') return null
+    try {
+      return JSON.parse(localStorage[id])
+    } catch (err) {
+      console.error(`Can not parse localStorage[${id}] as JSON:\n${localStorage[id]},\nerror:\n`, err)
+    }
+  } else try {
+    value = JSON.stringify(value)
+    localStorage.setItem(id, value)
+    return value
+  } catch (err) {
+    console.error('Can not convert to JSON value', value, '\nerror:\n', err)
+  }
+  return null
+} : () => {}
+
+const lapi = (server, getState, setState) => ({
+  init: (...args) => console.log('init:', ...args),
+  message: (...args) => console.log('init:', ...args),
+})
 
 class App extends Component {
 
-  constructor() {
+  constructor({ path }) {
     super()
+
+    path = path || PATH
 
     this.ecdh = createECDH('secp521r1')
 
@@ -26,22 +57,72 @@ class App extends Component {
       message: ''
     }
 
+    if(isClient){
+
+      this.setupKeys()
+
+      const url = `wss://cloud.mem.chat:${0xC0DE}`
+      let socket = null
+
+      try {
+
+        socket = new WebSocket(url)
+
+        socket.addEventListener('open', () => {
+          rapi({
+            lapi,
+            socket,
+            ecdh: this.ecdh,
+            getState: this.getState,
+            setState: state => this.setState(state)
+          })
+          .then(server => {
+            this.server = server
+            console.log({ server, id: this.id })
+            this.setState({ connected: true })
+            server.init()
+          })
+        })
+
+      } catch (e) {
+        console.warn(`Connection to ${url}: awaiting mem cloud connection...`)
+      }
+    }
+
+  }
+
+  getState () {
+    return this.state
+  }
+
+  setupKeys (privateKey = null) {
+    if(privateKey) {
+      this.ecdh.setPrivateKey(privateKey)
+      this.publicKey = this.ecdh.getPublicKey()
+      this.privateKey = privateKey
+    } else {
+      if(LS) privateKey = LS('privateKey');
+      if(privateKey) return this.setupKeys(privateKey);
+      this.publicKey = this.ecdh.generateKeys()
+      this.privateKey = this.ecdh.getPrivateKey()
+    }
+    if(LS) LS('privateKey', this.privateKey)
   }
 
   onPeerPublicChange({value = null}) {
     if(!value) return;
     try {
-      let secret = this.ecdh.computeSecret(new Uint8Array(b64.decode(value)))
+      let secret = this.ecdh.computeSecret(new Uint8Array(B64.decode(value)))
       this.setState({ secret })
       this.bc = new BitChaos(secret)
-    } catch (e) { console.warn('wrong peer public:', value, b64.decode(value), e) }
+    } catch (e) { console.warn('wrong peer public:', value, B64.decode(value), e) }
   }
 
   onPeerMessageChange({value = null}) {
     if(!value) return;
     try {
       this.setState({
-        peerMessage: this.bc.decrypt(new Uint8Array(b64.decode(value)))
+        peerMessage: this.bc.decrypt(new Uint8Array(B64.decode(value)))
       })
     } catch (e) { console.warn('wrong peer message:', value, e) }
   }
@@ -50,7 +131,7 @@ class App extends Component {
     if(!value) return;
     try {
       this.setState({
-        message: b64.encode(this.bc.encrypt(value))
+        message: B64.encode(this.bc.encrypt(value))
       })
     } catch (e) { console.warn('wrong message:', value, e) }
   }
@@ -76,7 +157,7 @@ class App extends Component {
 
     const { key, secret, peerMessage, message } = this.state
 
-    const publicKey = b64.encode(key)
+    const publicKey = B64.encode(key)
 
     return (
       <div className="App">
@@ -108,11 +189,79 @@ class App extends Component {
         </div>
 
         <h5>2018 © MEM COST Technologies</h5>
+        <div className="footer">
+          <div className="top-2"><h3>{`Want to be owner of You id\`s?`}</h3></div>
+          <div className="top-2">{`Contribute ( Self Security Hand Book comming soon. Please `}<a className="mail-link" href="https://github.com/relative-chaos">{`follow on gihub`}</a>{` )`}</div>
+          <div className="top-2">{`Or `}<a className="mail-link" href="https://money.yandex.ru/to/410018135995820">{`Donate`}</a>{`, if you understand, what we do:`}</div>
+          <div className="flex top-2">
+            <div className="key">
+              <p>ETH</p>
+              <p className="wallet">0xd0b9e1735ea2c1e2afec712089afc8fcad8906e0</p>
+            </div>
+            <div className="key left-2">
+              <p>BTC</p>
+              <p className="wallet">16ghju2oHehczLCcCjRszbYqMrpXpp1pnS</p>
+            </div>
+            <div className="key">
+              <p>DOGE</p>
+              <p className="wallet">DCiTowGc2dLLRwY1sEhEBzZ4ZniJL1Hvbn</p>
+            </div>
+            <div className="key left-2">
+              <p>LTC</p>
+              <p className="wallet">LNLcMkQD8jogMtfvjCFaMucyXoECUDn8pL</p>
+            </div>
+          </div>
+          <div className="flex top-2">
+            <div className="key">
+              <p>XMR</p>
+              <p className="wallet">4BrL51JCc9NGQ71kWhnYoDRffsDZy7m1HUU7MRU4nUMXAHNFBEJhkTZV9HdaL4gfuNBxLPc3BeMkLGaPbF5vWtANQoshL4x66PkQf8usv5</p>
+            </div>
+            <div className="key left-2">
+              <p>ZEC</p>
+              <p className="wallet">t1LJnH6QFP59PL1UokvZ3YtyoJs6B9yQEiR</p>
+            </div>
+            <div className="key">
+              <p>BCH</p>
+              <p className="wallet">bitcoincash:qzu0j3n5x48d338ngfgvv2h6frltjaxvcsw6347sr7</p>
+            </div>
+            <div className="key left-2">
+              <p>Wawes</p>
+              <p className="wallet">3PHcweuuz8mBZUKC6mNX4VNGhkPNX8a7jux</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 }
+
+/*
+
+
+const bgFrame = typeof location === 'undefined' ? false : /^\/https?:\/\//.test(location.pathname)
+
+        <div {...{ className: css.appView }}>
+          { bgFrame && <iframe {...{
+            src: `http://evm.mem.chat:${0xBA5E}${typeof location === undefined ? '/' : location.pathname}`,
+            sandbox: "allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts",
+            allow: "geolocation; microphone; camera; midi; vr",
+            allowtransparency: "true",
+            allowpaymentrequest: "true",
+            allowFullScreen: "true",
+            className: css.resultIframe
+          }} /> }
+        </div>
+
+ */
+
+
+
+        // <div className="top-2"><span>{`Ask: `}</span><a className="mail-link" href="mailto:support@mem.chat">{`support@mem.chat`}</a><span className="comment">{`// please encrypt your question for support using this key:`}</span></div>
+        // <div className="comment left-4 width-60 top-1">{`BAC1cV8+02UTO0H2I3tiQif9JtcQ5SeZC9hcih8qPe60XTE6SngGA5wsKrrgszJeRAo9nQ1PhFxAGxHCC4WpedZKOQBvjGFQteLZfglpVPYDiZKr1mXwjy2xh4PRdfxwVdrFkmW2olkApopXCliFP67KEO5HdZKp56OYV53PTrj6nOx9wQ==`}</div>
         // <textarea className='copy-area' ref={ref => this.copyArea = ref} onChange={e => e} value=''/>
+
+
+// https://money.yandex.ru/to/410018135995820
 
 export default App;
 
@@ -137,30 +286,50 @@ export default App;
 
 операция ИЛИ ( X | "Y" = R )
 однозначно 0
-0 | "0" = 0 => 000 = 0
+0 | "0" = 0 => 010 = 0
 однозначно 1
-0 | "1" = 1 => 001 = 1
+0 | "1" = 1 => 011 = 1
 суперпозиция состояний (и то и другое одновременно)
-1 | "0" = 1 => 101 = ?
-1 | "1" = 1 => 101 = ?
+1 | "0" = 1 => 111 = ?
+1 | "1" = 1 => 111 = ?
 невозможное состояние (ни то ни другое)
-1 | "!" = 0 => 100 = !
+1 | "!" = 0 => 110 = !
 
 операция И ( X & "Y" = R )
 суперпозиция состояний (и то и другое одновременно)
-0 & "0" = 0 => 010 = ?
-0 & "1" = 0 => 010 = ?
+0 & "0" = 0 => 000 = ?
+0 & "1" = 0 => 000 = ?
 невозможное состояние (ни то ни другое)
-0 & "!" = 1 => 011 = !
+0 & "!" = 1 => 001 = !
 однозначно 0
-1 & "0" = 0 => 110 = 0
+1 & "0" = 0 => 100 = 0
 однозначно 1
-1 & "1" = 1 => 111 = 1
+1 & "1" = 1 => 101 = 1
+
+Так можно закодировать тремя битами виртуальный кубит. Но можем пойти дальше и закодировать тремя кубитами, да потратив в сумме 9 бит на кодирование одного кубита, но полагаю оно того стоит ) При таком подходе, мы можем любую из составляющих опорного триплета содержать в состоянии суперпозиции, например бит операции и имитировать дальнее взаимодействие например путём синхронизации событий по таймеру для двух кубитов независимо от расстояния между ними. Это вроде и не является квантовой запутанностью в физическом смысле, но работает так же, что позволяет предположить, что явление квантовой запутанности возможно между виртуальными состояниями суперпозиции
+
+Bнтересно, достаточно ли будет такого приближения, что бы запустить алгоритм Шора без навороченного квантового кампа ) ?
+
+кстати кейс как заюзать невозможное состояние (в матемактике аналог - это корень из -1 ): кубит операции с невозможным значением может кодировать операцию XOR - исключающее ИЛИ ( X ^ "Y" = R )
+
+однозначно 0
+0 ^ "0" = 0
+однозначно 1
+0 ^ "1" = 1
+однозначно 1
+1 ^ "0" = 1
+однозначно 0
+1 ^ "1" = 0
+
+в этом случае нет ни суперпозиции ни невозможного состояния и проц переходит в классический режим обычной бинарной логики
 
 
 
 
+-----------------------------------------
 
+MEM T-Comunity
+        мастера своего дела
 
 
 
