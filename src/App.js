@@ -4,7 +4,6 @@ import B64 from 'base64-arraybuffer'
 // import QR from 'qrcode.react'
 
 import BitChaos from './lib/bit-chaos'
-import rapi from './lib/rapi-lapi'
 
 import logo from './logo-te-logo.png'
 import './App.css';
@@ -34,14 +33,10 @@ const LS = isClient ? (id, value = null) => {
   return null
 } : () => {}
 
-const lapi = (server, getState, setState) => ({
-  init: (...args) => console.log('init:', ...args),
-  message: (...args) => console.log('init:', ...args),
-})
-
 class App extends Component {
 
   constructor({ path }) {
+
     super()
 
     path = path || PATH
@@ -51,42 +46,20 @@ class App extends Component {
     this.bc = new BitChaos('')
 
     this.state = {
-      key: this.ecdh.generateKeys(),
+      key: '',
       secret: '',
       peerMessage: '',
       message: ''
     }
 
+  }
+
+  componentDidMount () {
+
     if(isClient){
 
       this.setupKeys()
 
-      const url = `wss://cloud.mem.chat:${0xC0DE}`
-      let socket = null
-
-      try {
-
-        socket = new WebSocket(url)
-
-        socket.addEventListener('open', () => {
-          rapi({
-            lapi,
-            socket,
-            ecdh: this.ecdh,
-            getState: this.getState,
-            setState: state => this.setState(state)
-          })
-          .then(server => {
-            this.server = server
-            console.log({ server, id: this.id })
-            this.setState({ connected: true })
-            server.init()
-          })
-        })
-
-      } catch (e) {
-        console.warn(`Connection to ${url}: awaiting mem cloud connection...`)
-      }
     }
 
   }
@@ -98,12 +71,12 @@ class App extends Component {
   setupKeys (privateKey = null) {
     if(privateKey) {
       this.ecdh.setPrivateKey(privateKey)
-      this.publicKey = this.ecdh.getPublicKey()
+      this.setState({key: this.ecdh.getPublicKey()})
       this.privateKey = privateKey
     } else {
       if(LS) privateKey = LS('privateKey');
       if(privateKey) return this.setupKeys(privateKey);
-      this.publicKey = this.ecdh.generateKeys()
+      this.setState({key: this.ecdh.generateKeys()})
       this.privateKey = this.ecdh.getPrivateKey()
     }
     if(LS) LS('privateKey', this.privateKey)
@@ -112,7 +85,7 @@ class App extends Component {
   onPeerPublicChange({value = null}) {
     if(!value) return;
     try {
-      let secret = this.ecdh.computeSecret(new Uint8Array(B64.decode(value)))
+      let secret = this.ecdh.computeSecret(new Uint8Array(B64.decode(value.trim())))
       this.setState({ secret })
       this.bc = new BitChaos(secret)
     } catch (e) { console.warn('wrong peer public:', value, B64.decode(value), e) }
@@ -122,7 +95,7 @@ class App extends Component {
     if(!value) return;
     try {
       this.setState({
-        peerMessage: this.bc.decrypt(new Uint8Array(B64.decode(value)))
+        peerMessage: this.bc.decrypt(new Uint8Array(B64.decode(value.trim())))
       })
     } catch (e) { console.warn('wrong peer message:', value, e) }
   }
@@ -153,11 +126,11 @@ class App extends Component {
 
   render() {
 
-    console.log('key:', this.state.key)
 
     const { key, secret, peerMessage, message } = this.state
 
     const publicKey = B64.encode(key)
+    console.log({key, secret, publicKey})
 
     return (
       <div className="App">
@@ -173,7 +146,7 @@ class App extends Component {
 
           <div className="h-box">
             <span><textarea className='key-field' placeholder="Открытый ключ собеседника" onChange={({target = null}) => target && this.onPeerPublicChange(target)}/></span>
-            <span><textarea className='key-field' title="Скопировать в буфер" onChange={e=>e} defaultValue={publicKey}/></span>
+            <span><textarea className='key-field' title="Скопировать в буфер" onChange={e=>e} value={publicKey}/></span>
           </div>
 
           <div className="h-box">
@@ -182,8 +155,8 @@ class App extends Component {
           </div>
 
           <div className="h-box">
-            <span><textarea disabled onClick={({target = null}) => target && this.copy(target)} title="Скопировать в буфер" placeholder="Расшифрованный текст собеседника" value={peerMessage}/></span>
-            <span><textarea disabled onClick={({target = null}) => target && this.copy(target)} title="Скопировать в буфер" placeholder="Шифрованное сообщение собеседнику" value={message}/></span>
+            <span><textarea onClick={({target = null}) => target && this.copy(target)} title="Скопировать в буфер" placeholder="Расшифрованный текст собеседника" value={peerMessage}/></span>
+            <span><textarea onClick={({target = null}) => target && this.copy(target)} title="Скопировать в буфер" placeholder="Шифрованное сообщение собеседнику" value={message}/></span>
           </div>
 
         </div>
@@ -192,7 +165,7 @@ class App extends Component {
         <div className="footer">
           <div className="top-2"><h3>{`Want to be owner of You id\`s?`}</h3></div>
           <div className="top-2">{`Contribute ( Self Security Hand Book comming soon. Please `}<a className="mail-link" href="https://github.com/relative-chaos">{`follow on gihub`}</a>{` )`}</div>
-          <div className="top-2">{`Or `}<a className="mail-link" href="https://money.yandex.ru/to/410018135995820">{`Donate`}</a>{`, if you understand, what we do:`}</div>
+          <div className="top-2">{`Or `}<a className="mail-link" href="https://money.yandex.ru/to/41001821124082">{`Donate`}</a>{`, if you understand, what we do:`}</div>
           <div className="flex top-2">
             <div className="key">
               <p>ETH</p>
@@ -222,10 +195,10 @@ class App extends Component {
             </div>
             <div className="key">
               <p>BCH</p>
-              <p className="wallet">bitcoincash:qzu0j3n5x48d338ngfgvv2h6frltjaxvcsw6347sr7</p>
+              <p className="wallet">qzu0j3n5x48d338ngfgvv2h6frltjaxvcsw6347sr7</p>
             </div>
             <div className="key left-2">
-              <p>Wawes</p>
+              <p>WAVES</p>
               <p className="wallet">3PHcweuuz8mBZUKC6mNX4VNGhkPNX8a7jux</p>
             </div>
           </div>
