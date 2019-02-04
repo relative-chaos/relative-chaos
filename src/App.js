@@ -3,12 +3,14 @@ import createECDH from 'create-ecdh'
 import B64 from 'base64-arraybuffer'
 // import QR from 'qrcode.react'
 
+/* eslint-disable */
+
 import BitChaos from './lib/bit-chaos'
+import BitFilament from './lib/bit-filament'
 
 import logo from './logo-te-logo.png'
 import './App.css';
 
-/* eslint-disable */
 
 const isClient = typeof window !== 'undefined'
 
@@ -112,16 +114,7 @@ class App extends Component {
   copy({value = null}) {
     if(!value) return;
     console.log({navigator})
-    // navigator.clipboard.writeText(value).then(console.log, console.error);
 
-
-
-    // console.log({value})
-    // this.copyArea.value = value
-    // console.log('this.copyArea.value', this.copyArea.value)
-    // this.copyArea.focus()
-    // this.copyArea.select()
-    // document.execCommand('copy');
   }
 
   render() {
@@ -145,18 +138,18 @@ class App extends Component {
         <div className="App-ui">
 
           <div className="h-box">
-            <span><textarea className='key-field' placeholder="Открытый ключ собеседника" onChange={({target = null}) => target && this.onPeerPublicChange(target)}/></span>
-            <span><textarea className='key-field' title="Скопировать в буфер" onChange={e=>e} value={publicKey}/></span>
+            <span><textarea className='key-field' placeholder="Paste partner public key here" onChange={({target = null}) => target && this.onPeerPublicChange(target)}/></span>
+            <span><textarea className='key-field' title="Copy to clipboard" onClick={({target = null}) => target && this.copy(target)} value={publicKey}></textarea></span>
           </div>
 
           <div className="h-box">
-            <span><textarea placeholder="Шифрованный текст собеседника" onChange={({target = null}) => target && this.onPeerMessageChange(target)}/></span>
-            <span><textarea placeholder="Ваше сообщение собеседнику" onChange={({target = null}) => target && this.onMessageChange(target)}/></span>
+            <span><textarea placeholder="Paste partner encripted text here" onChange={({target = null}) => target && this.onPeerMessageChange(target)}/></span>
+            <span><textarea placeholder="Write or paste you message in clear text here" onChange={({target = null}) => target && this.onMessageChange(target)}/></span>
           </div>
 
           <div className="h-box">
-            <span><textarea onClick={({target = null}) => target && this.copy(target)} title="Скопировать в буфер" placeholder="Расшифрованный текст собеседника" value={peerMessage}/></span>
-            <span><textarea onClick={({target = null}) => target && this.copy(target)} title="Скопировать в буфер" placeholder="Шифрованное сообщение собеседнику" value={message}/></span>
+            <span><textarea onClick={({target = null}) => target && this.copy(target)} onChange={e=>e} title="Copy to clipboard" placeholder="Decrypted text from partner appears here" value={peerMessage}/></span>
+            <span><textarea onClick={({target = null}) => target && this.copy(target)} onChange={e=>e} title="Copy to clipboard" placeholder="Your encrypted message" value={message}/></span>
           </div>
 
         </div>
